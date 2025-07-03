@@ -3,21 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Location Finder</title>
+    <title>Location Tracker</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f0f2f5; text-align: center; flex-direction: column; }
-        #container { padding: 40px; border-radius: 10px; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
-        h1 { color: #333; }
-        button { background-color: #007bff; color: white; border: none; padding: 15px 30px; font-size: 16px; border-radius: 5px; cursor: pointer; transition: background-color 0.3s; }
-        button:hover { background-color: #0056b3; }
-        #locationData { margin-top: 20px; font-size: 18px; color: #555; min-height: 50px; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+            text-align: center;
+            flex-direction: column;
+        }
+        #container {
+            padding: 40px;
+            border-radius: 10px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 90%;
+            width: 500px;
+        }
+        h1 {
+            color: #333;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #locationData {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #555;
+            min-height: 50px;
+            word-wrap: break-word;
+        }
     </style>
 </head>
 <body>
 
     <div id="container">
-        <h1>Find & Share My Location</h1>
-        <p>Click the button below to share your location with us.</p>
+        <h1>Share My Location</h1>
+        <p>Click the button below to share your current location.</p>
         <button id="getLocationBtn">Share My Location</button>
         <div id="locationData">
             </div>
@@ -27,12 +63,9 @@
         const getLocationBtn = document.getElementById('getLocationBtn');
         const locationData = document.getElementById('locationData');
 
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        // !!! PASTE YOUR GOOGLE SCRIPT URL HERE !!!
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        // CORRECT
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwvIDeRLtElj4IUfkSlXzA7E2pSLvqUwZrfx13X85zmS6LApKkO6i4YoEviZXuJNnZ7/exec';
-        
+        // This is your unique and correct Web App URL.
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbytkYbn4sfAzwAXRilRuIUYP6U1MoHWoQBUpiQtRHuPMEDTe9rkV-nAADUclExGpzpH/exec';
+
         getLocationBtn.addEventListener('click', () => {
             if (navigator.geolocation) {
                 locationData.innerHTML = "Requesting location...";
@@ -44,29 +77,29 @@ const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwvIDeRLtElj4
 
         async function sendPositionToServer(position) {
             const { latitude, longitude } = position.coords;
-
             locationData.innerHTML = `Found you! Saving location...`;
             
-            // To get the user's IP, we can use a free service
-            const ipResponse = await fetch('https://api.ipify.org?format=json');
-            const ipData = await ipResponse.json();
-            const ipAddress = ipData.ip;
+            let ipAddress = 'Unknown';
+            try {
+                const ipResponse = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipResponse.json();
+                ipAddress = ipData.ip;
+            } catch (ipError) {
+                console.error('Could not get IP address:', ipError);
+            }
             
             try {
-                // The URL here now includes the IP as a parameter
-                const response = await fetch(`${GOOGLE_SCRIPT_URL}?ip=${ipAddress}`, {
-                    method: 'POST',
-                    // This 'mode' is important to avoid CORS errors with Google Scripts
+                // This fetch call sends the data to your Google Script
+                await fetch(`${GOOGLE_SCRIPT_URL}?ip=${ipAddress}`, {
+                    method: 'POST', // This ensures a POST request is sent
                     mode: 'no-cors', 
+                    redirect: 'follow',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    // The body is a stringified version of our data
                     body: JSON.stringify({ latitude, longitude })
                 });
 
-                // Note: Because of 'no-cors' mode, we can't read the response from the server.
-                // We just have to assume it worked. The Google Sheet is the source of truth.
                 locationData.innerHTML = "Thank you! Your location has been shared.";
 
             } catch (error) {
@@ -76,12 +109,19 @@ const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwvIDeRLtElj4
         }
 
         function showError(error) {
+            let message = "An unknown error occurred.";
             switch(error.code) {
-                case error.PERMISSION_DENIED: locationData.innerHTML = "You denied the request for Geolocation."; break;
-                case error.POSITION_UNAVAILABLE: locationData.innerHTML = "Location information is unavailable."; break;
-                case error.TIMEOUT: locationData.innerHTML = "The request to get user location timed out."; break;
-                case error.UNKNOWN_ERROR: locationData.innerHTML = "An unknown error occurred."; break;
+                case error.PERMISSION_DENIED:
+                    message = "You denied the request for Geolocation.";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    message = "Location information is unavailable.";
+                    break;
+                case error.TIMEOUT:
+                    message = "The request to get user location timed out.";
+                    break;
             }
+            locationData.innerHTML = message;
         }
     </script>
 
