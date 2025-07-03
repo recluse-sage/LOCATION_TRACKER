@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Finder</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+            text-align: center;
+            flex-direction: column;
+        }
+        #container {
+            padding: 40px;
+            border-radius: 10px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #locationData {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #555;
+            min-height: 50px; /* To prevent layout shift */
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="container">
+        <h1>Find My Location</h1>
+        <p>Click the button below to get your current geographic coordinates.</p>
+        <button id="getLocationBtn">Get My Location</button>
+        <div id="locationData">
+            </div>
+    </div>
+
+    <script>
+        // Get references to the button and the div where we will display the data
+        const getLocationBtn = document.getElementById('getLocationBtn');
+        const locationData = document.getElementById('locationData');
+
+        // Add a click event listener to the button
+        getLocationBtn.addEventListener('click', () => {
+            // Check if the Geolocation API is supported by the browser
+            if (navigator.geolocation) {
+                locationData.innerHTML = "Requesting location...";
+                // If supported, call getCurrentPosition()
+                navigator.geolocation.getCurrentPosition(showPosition, showError);
+            } else {
+                // If not supported, display a message
+                locationData.innerHTML = "Geolocation is not supported by this browser.";
+            }
+        });
+
+        // This function is called if the location is successfully retrieved
+        function showPosition(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+
+            // Display the coordinates
+            locationData.innerHTML = `Latitude: ${latitude} <br> Longitude: ${longitude}`;
+
+            // (Optional) Add a link to Google Maps
+            locationData.innerHTML += `<br><br><a href="https://www.google.com/maps?q=${latitude},${longitude}" target="_blank">View on Google Maps</a>`;
+        }
+
+        // This function is called if an error occurs
+        function showError(error) {
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    locationData.innerHTML = "User denied the request for Geolocation."
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    locationData.innerHTML = "Location information is unavailable."
+                    break;
+                case error.TIMEOUT:
+                    locationData.innerHTML = "The request to get user location timed out."
+                    break;
+                case error.UNKNOWN_ERROR:
+                    locationData.innerHTML = "An unknown error occurred."
+                    break;
+            }
+        }
+    </script>
+
+</body>
+</html>
